@@ -2,3 +2,5 @@
 *.h5
 data/*
 baselineModel/*
+__pycache__/*
+fourier/*

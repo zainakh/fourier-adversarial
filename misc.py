@@ -11,7 +11,6 @@ from skimage.measure import compare_ssim, compare_psnr
 
 os.environ['OMP_NUM_THREADS'] = '8'
 
-
 def crop(data, shape=(320, 320)):
     w_from = (data.shape[-2] - shape[0]) // 2
     h_from = (data.shape[-1] - shape[1]) // 2

@@ -15,13 +15,14 @@ import readData as rd
 
 cwd = os.getcwd()
 config = tf.ConfigProto()
-config.gpu_options.allow_growth = True
+#config.gpu_options.allow_growth = True
+
 # %% name of model directory
 directory = 'baselineModel'
 modelDir = cwd + '/' + directory
 loadChkPoint = tf.train.latest_checkpoint(modelDir)
-# %% get the dataset
 
+# %% get the dataset
 tstOrg, tstInp = rd.get_validation_data(num_from=20, num_img=1, acc=4)
 mu = np.mean(tstInp, axis=(-1, -2), keepdims=True)
 st = np.std(tstInp, axis=(-1, -2), keepdims=True)
@@ -30,9 +31,11 @@ tstInp = np.clip(tstInp, -6, 6)
 
 nImg, nRow, nCol = tstOrg.shape
 
+
 # %% load the model and do the prediction
 tstInp = tstInp[..., np.newaxis]
 tstRec = np.empty(tstInp.shape, dtype=np.float32)
+tstGrad = np.empty(tstInp.shape, dtype=np.float32)
 tf.reset_default_graph()
 with tf.Session(config=config) as sess:
     new_saver = tf.train.import_meta_graph(modelDir + '/modelTst.meta')
@@ -43,6 +46,11 @@ with tf.Session(config=config) as sess:
     for i in range(nImg):
         dataDict = {senseT: tstInp[[i]]}
         tstRec[i] = sess.run(predT, feed_dict=dataDict)
+
+        g = tf.gradients(predT, senseT)
+        tstGrad[i] = sess.run(predT, feed_dict=dataDict)
+        
+print(tstGrad[i])
 
 # %% calculate the PSNR and SSIM
 tstRec = tstRec[..., 0]
