@@ -13,6 +13,7 @@ import tensorflow as tf
 import misc as sf
 import readData as rd
 
+tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 cwd = os.getcwd()
 config = tf.ConfigProto()
 #config.gpu_options.allow_growth = True
@@ -45,12 +46,15 @@ with tf.Session(config=config) as sess:
     senseT = graph.get_tensor_by_name('sense:0')
     for i in range(nImg):
         dataDict = {senseT: tstInp[[i]]}
+        g = tf.gradients(predT, senseT)
         tstRec[i] = sess.run(predT, feed_dict=dataDict)
 
-        g = tf.gradients(predT, senseT)
-        tstGrad[i] = sess.run(predT, feed_dict=dataDict)
+        sess.run(tf.global_variables_initializer())
+        grad = sess.run(g, feed_dict=dataDict)
+
         
-print(tstGrad[i])
+print(tstRec[i])
+print(grad)
 
 # %% calculate the PSNR and SSIM
 tstRec = tstRec[..., 0]

@@ -7,7 +7,8 @@ This file contains some supporting functions used during training and testing.
 import os
 import numpy as np
 import mkl_fft
-from skimage.measure import compare_ssim, compare_psnr
+#from skimage.measure import compare_ssim, compare_psnr
+from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 
 os.environ['OMP_NUM_THREADS'] = '8'
 
@@ -52,12 +53,12 @@ def sos(data, dim=-3):
 
 
 def ssim2(gt, pred):
-    return compare_ssim(gt.transpose(1, 2, 0), pred.transpose(1, 2, 0),
+    return structural_similarity(gt.transpose(1, 2, 0), pred.transpose(1, 2, 0),
                         multichannel=True, data_range=gt.max())
 
 
 def psnr2(gt, pred):
-    return compare_psnr(gt, pred, data_range=gt.max())
+    return peak_signal_noise_ratio(gt, pred, data_range=gt.max())
 
 
 def r2c(inp):
