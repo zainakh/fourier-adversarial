@@ -29,17 +29,17 @@ mu = np.mean(tst_inp, axis=(-1, -2), keepdims=True)
 st = np.std(tst_inp, axis=(-1, -2), keepdims=True)
 tst_inp = (tst_inp - mu) / st
 tst_inp = np.clip(tst_inp, -6, 6)
-
-_, nRow, nCol = tst_org.shape
+tst_org_adv = np.copy(tst_org)
 
 # Corrupt the input Fourier coefficients with Gaussian noise
-mean, std = 0.0, 0.5
+mean, std = mu[0][0][0], 0.2
 gauss_noise = np.random.normal(mean, std, tst_inp.shape)
 img_shape = np.shape(tst_inp)
 avg_perturb = np.sum(np.absolute(gauss_noise)) / (img_shape[0] * img_shape[1] * img_shape[2])
 tst_inp_gauss = np.copy(tst_inp) + gauss_noise
 
 # Load model and predict
+tst_org_adv = tst_org_adv[..., np.newaxis]
 tst_inp = tst_inp[..., np.newaxis]
 tst_rec = np.empty(tst_inp.shape, dtype=np.float32)
 tst_inp_gauss = tst_inp_gauss[..., np.newaxis]
@@ -62,7 +62,8 @@ with tf.compat.v1.Session(config=config) as sess:
     tst_rec_gauss[0] = sess.run(predT, feed_dict={senseT: tst_inp_gauss[[0]]})
 
     # Get gradient of loss with respect to input
-    loss = tf.norm(predT - senseT, ord='euclidean')
+    origT = tf.convert_to_tensor(tst_org_adv)
+    loss = tf.norm(predT - origT, ord='euclidean')
     g = tf.gradients(loss, senseT)
     sess.run(tf.global_variables_initializer())
     grad = sess.run(g, feed_dict={senseT: tst_inp[[0]]})
@@ -144,3 +145,15 @@ for i in range(1, 4):
     plt.axis('off')
 
 plt.savefig('corrupt.png', bbox_inches='tight')
+
+'''
+from numpy import save, load
+diff_sse = adv_error - original_error 
+perturb = avg_perturb * (img_shape[0] * img_shape[1] * img_shape[2])
+sse_vs_perturb = load('data_orig.npy')
+sse_vs_perturb = np.append(sse_vs_perturb, [diff_sse, perturb, std])
+save('data_orig.npy', sse_vs_perturb)
+print(sse_vs_perturb)
+'''
+
+print(np.sum(np.absolute(tst_rec)))
