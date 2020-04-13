@@ -3,31 +3,22 @@ import numpy as np
 
 plt.style.use('seaborn')
 
-sse_data_gauss = np.load('data.npy')
-sse_data_orig = np.load('data_orig.npy')
+all_data = np.load('Apr13.npy')
+n = 4
+data = [all_data[k:k+n] for k in range(0, len(all_data), n)]
+data = np.asarray(data)
 
-# Group into threes 
-# (Adv SSE - Other SSE, Perturb, STD in Gauss noise)
-gauss_data = []
-it = iter(sse_data_gauss)
-for elem in it:
-    gauss_data.append([elem, next(it), next(it)])
-gauss_data[0], gauss_data[1] = gauss_data[1], gauss_data[0]
-gauss_x = [item[1] for item in gauss_data]
-gauss_y = [item[0] for item in gauss_data]
+# Group into fours 
+# (Perturb, Original Error, Gaussian Error, Adversarial Error)
+x = [item[0] for item in data]
+orig_y = [item[1] for item in data]
+gauss_y = [item[2] for item in data]
+adv_y = [item[3] for item in data]
 
-orig_data = []
-it = iter(sse_data_orig)
-for elem in it:
-    orig_data.append([elem, next(it), next(it)])
-orig_data[0], orig_data[1] = orig_data[1], orig_data[0]
-orig_x = [item[1] for item in orig_data]
-orig_y = [item[0] for item in orig_data]
-
-plt.plot(gauss_x, gauss_y, marker='o', label='Gaussian Noise Reconstruction')
-plt.plot(orig_x, orig_y, marker='o', color='r', label='Original Reconstruction')
-plt.plot(orig_x, len(orig_y) * [0], color='black')
-plt.ylabel('SSE Difference b/t Adversarial Reconstruction and Other Reconstruction')
+plt.plot(x, gauss_y, marker='o', label='Gaussian Noise Reconstruction')
+plt.plot(x, adv_y, marker='o', color='b', label='Adversarial Reconstruction')
+plt.plot(x, orig_y, marker='o', color='r', label='Original Reconstruction')
+plt.ylabel('SSE in Reconstruction')
 plt.xlabel('Total Perturbations Added')
-plt.legend(loc='lower left')
+plt.legend(loc='upper left')
 plt.savefig('sse_graph.png')
