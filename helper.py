@@ -33,7 +33,7 @@ def image_grid(filename, tst_org, tst_inp, tst_rec, gauss_noise, tst_inp_gauss, 
 
     # Display Gaussian results
     gaussian_images = [gauss_noise, tst_inp_gauss, tst_rec_gauss]
-    gaussian_titles = ['Mask', 'Gaussian FC', 'Gaussian Reconstruct']
+    gaussian_titles = ['Perturbation', 'Gaussian FC', 'Gaussian Reconstruct']
     for i in range(1, 4):
         plt.subplot(rows, cols, i + 3)
         plt.imshow(gaussian_images[i - 1][0], cmap='gray')
@@ -42,7 +42,7 @@ def image_grid(filename, tst_org, tst_inp, tst_rec, gauss_noise, tst_inp_gauss, 
 
     # Display adversarial results
     adv_images = [tst_intr_adv, tst_inp_adv, tst_rec_adv]
-    adv_titles = ['Mask', 'Adv. FC', 'Adv. Reconstruct']
+    adv_titles = ['Perturbation', 'Adv. FC', 'Adv. Reconstruct']
     for i in range(1, 4):
         plt.subplot(rows, cols, i + 6)
         plt.imshow(adv_images[i - 1][0], cmap='gray')

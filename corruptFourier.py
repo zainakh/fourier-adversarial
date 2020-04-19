@@ -25,10 +25,11 @@ model_dir = cwd + '/' + directory
 load_chk_pt = tf.train.latest_checkpoint(model_dir)
 
 
-epsilons = [0., 0.5, 1.0, 1.5, 2.0, 2.5, 3., 3.5, 4., 4.5, 5.]
+epsilons = [15]
 for epsilon in epsilons:
     # Get data set
     tst_org, tst_inp = rd.get_validation_data(num_from=20, num_img=1, acc=4)
+    print(np.shape(tst_inp))
     mu = np.mean(tst_org, axis=(-1, -2), keepdims=True)
     st = np.std(tst_org, axis=(-1, -2), keepdims=True)
     tst_inp = (tst_inp - mu) / st
@@ -96,5 +97,5 @@ for epsilon in epsilons:
 
     save_results('Apr13.npy', img_shape, original_error, gaussian_error, adv_error, avg_perturb)
 
-image_grid('end.png', tst_org, tst_inp, tst_rec, gauss_noise, tst_inp_gauss, tst_rec_gauss, tst_intr_adv, tst_inp_adv, tst_rec_adv)
+image_grid('larger2.png', tst_org, tst_inp, tst_rec, gauss_noise, tst_inp_gauss, tst_rec_gauss, tst_intr_adv, tst_inp_adv, tst_rec_adv)
 
