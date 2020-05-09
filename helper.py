@@ -18,13 +18,13 @@ def save_results(datafile, img_shape, original_error, gaussian_error, adv_error,
     print(errors)
 
 
-def image_grid(filename, tst_org, tst_inp, tst_rec, gauss_noise, tst_inp_gauss, tst_rec_gauss, tst_intr_adv, tst_inp_adv, tst_rec_adv):
+def image_grid(filename, tst_org, tst_inp, fc_rec, gauss_noise, tst_inp_gauss, tst_rec_gauss, tst_intr_adv, tst_inp_adv, tst_rec_adv):
     # Subplot parameters
     rows, cols = 3, 3
 
     # Display original results
-    original_images = [tst_org, tst_inp, tst_rec]
-    original_titles = ['Original', 'FC', 'Reconstruct']
+    original_images = [tst_org, tst_inp, fc_rec]
+    original_titles = ['Original', 'FC', 'FC Reconstruct']
     for i in range(1, 4):
         plt.subplot(rows, cols, i)
         plt.imshow(original_images[i - 1][0], cmap='gray')
@@ -86,8 +86,8 @@ def calculate_psnr_ssim(tst_org, tst_rec, tst_rec_gauss, tst_rec_adv):
     return ([psnr_orig, psnr_gauss, psnr_adv], [ssim_orig, ssim_gauss, ssim_adv])
 
 
-def calculate_sse(tst_org, tst_rec, tst_rec_gauss, tst_rec_adv):
-    original_error = np.sqrt(np.sum((tst_rec[:, :, :] - np.copy(tst_org)[:, :, :]) ** 2))
+def calculate_sse(tst_org, tst_fc, tst_rec_gauss, tst_rec_adv):
+    fc_error = np.sqrt(np.sum((tst_fc[:, :, :] - np.copy(tst_org)[:, :, :]) ** 2))
     gaussian_error = np.sqrt(np.sum((tst_rec_gauss[:, :, :] - np.copy(tst_org)[:, :, :]) ** 2))
     adv_error = np.sqrt(np.sum((tst_rec_adv[:, :, :] - np.copy(tst_org)[:, :, :]) ** 2))
-    return [original_error, gaussian_error, adv_error]
+    return [fc_error, gaussian_error, adv_error]

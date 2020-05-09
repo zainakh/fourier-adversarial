@@ -7,7 +7,6 @@ This file contains some supporting functions used during training and testing.
 import os
 import numpy as np
 import mkl_fft
-#from skimage.measure import compare_ssim, compare_psnr
 from skimage.metrics import peak_signal_noise_ratio, structural_similarity
 
 os.environ['OMP_NUM_THREADS'] = '8'
@@ -37,8 +36,7 @@ def fft2c(img):
 def ifft2c(kspace):
     shp = kspace.shape
     scale = np.sqrt(np.prod(shp[-2:]))
-    nimg = int(np.prod(shp[0:-2]))
-
+    nimg = int(np.prod(shp[0:-2]))    
     kspace = np.reshape(kspace, (nimg, shp[-2], shp[-1]))
 
     tmp = np.empty_like(kspace)
