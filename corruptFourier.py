@@ -19,7 +19,8 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", "--filename", help="filename for saved numpy data")
     parser.add_argument("-i", "--image", help="filename for saved image")
-    parser.add_argument("-fc", "--fullcoeff", default=False, type=bool, help="if full set of Fourier coefficients is desired")
+    parser.add_argument("-fc", "--fullcoeff", action="store_true", help="if full set of Fourier coefficients is desired")
+    parser.add_argument("-p", "--partial", dest="fullcoeff", action="store_false", help="if partial set of Fourier coefficients is desired")
     return parser.parse_args()
 
 
@@ -27,6 +28,7 @@ def main(argv):
     filename = argv.filename
     img_name = argv.image
     full = argv.fullcoeff
+    print(full)
 
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
     os.environ['OMP_NUM_THREADS'] = '8'
@@ -122,7 +124,6 @@ def main(argv):
         shp = list(coeff_inp.shape)
         scale = np.sqrt(np.prod(shp[-2:]))
         gauss_noise_fc = np.random.normal(size=shp).view(np.complex64)
-        #gauss_noise_fc = np.random.randn(coeff_inp.shape).view(np.complex64)                                                              
         if epsilon != 0:  
             fc_scaling = ((perturb / scale) / np.sum(np.abs(gauss_noise_fc)))
             print(fc_scaling)
