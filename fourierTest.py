@@ -46,8 +46,7 @@ gauss_noise_fc = gauss_noise_fc_real[...] + gauss_noise_fc_imag[...]
 
 fc_scaling = np.sum(np.abs(coeff_inp)) / fraction
 gauss_noise_fc *= fc_scaling
-print(fraction, scale, np.sum(np.abs(gauss_noise_fc)), np.sum(np.abs(coeff_inp)))
-print('FC Scaling', fc_scaling)
+#print(fraction, scale, np.sum(np.abs(gauss_noise_fc)), np.sum(np.abs(coeff_inp)))
 
 coeff_final = np.copy(coeff_inp) + np.copy(gauss_noise_fc)
 idx_max = np.unravel_index(coeff_final.argmax(), coeff_final.shape)
