@@ -40,8 +40,8 @@ fraction = 20
 
 # Scale should be 320, so dividing by it in the Fourier space will yield correct size in image space
 scale = np.sqrt(np.prod(shp[-2:]))
-gauss_noise_fc_real = np.random.normal(mean, std, size=shp)
-gauss_noise_fc_imag = np.random.normal(mean, std, size=shp) * 1j
+gauss_noise_fc_real = np.abs(np.random.normal(mean, std, size=shp))
+gauss_noise_fc_imag = np.abs(np.random.normal(mean, std, size=shp) * 1j)
 gauss_noise_fc = gauss_noise_fc_real[...] + gauss_noise_fc_imag[...]
 
 fc_scaling = np.sum(np.abs(coeff_inp)) / fraction
