@@ -48,10 +48,8 @@ fc_scaling = np.sum(np.abs(coeff_inp)) / fraction
 gauss_noise_fc *= fc_scaling
 #print(fraction, scale, np.sum(np.abs(gauss_noise_fc)), np.sum(np.abs(coeff_inp)))
 
-coeff_final = np.copy(coeff_inp) + np.copy(gauss_noise_fc)
-idx_max = np.unravel_index(coeff_final.argmax(), coeff_final.shape)
-
 # Add perturbations to the FC via the Gaussian method
+coeff_final = np.copy(coeff_inp) + np.copy(gauss_noise_fc)
 tst_fc = sf.sos(sf.crop(sf.ifft2c(coeff_final), (320, 320)))
 tst_fc = tst_fc[np.newaxis, ...]
 fc_error = np.sqrt(np.sum((tst_fc[:, :, :] - np.copy(tst_org)[:, :, :]) ** 2))
