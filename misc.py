@@ -38,7 +38,6 @@ def ifft2c(kspace):
     scale = np.sqrt(np.prod(shp[-2:]))
     nimg = int(np.prod(shp[0:-2]))    
     kspace = np.reshape(kspace, (nimg, shp[-2], shp[-1]))
-
     tmp = np.empty_like(kspace)
     for i in range(nimg):
         tmp[i] = scale*np.fft.fftshift(mkl_fft.ifft2(np.fft.ifftshift(kspace[i])))

@@ -5,62 +5,66 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import readData as rd
 import misc as sf
+import mkl_fft
 from helper import *
 
 
-perturb = 2000
+# Testing the FC method with this inp array shows that it behaves as a Fourier transform
+# It applies scaling afterwards (to check, just applying fft2c and ifft2c will show they are transforms of each other)
+# Also tested with the identity matrix and it behaved as expected
+inp = np.eye(4)
+inp[0][0] -= 1
+inp[2][2] -= 1
+inp[3][3] -= 1
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-os.environ['OMP_NUM_THREADS'] = '8'
-tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+#print(inp)
+#res = sf.fft2c(inp)
+#print(res)
+#print(sf.ifft2c(res))
 
-cwd = os.getcwd()
-config = tf.compat.v1.ConfigProto()
 
-# Model directory name
-directory = 'baselineModel'
-model_dir = cwd + '/' + directory
-load_chk_pt = tf.train.latest_checkpoint(model_dir)
+tst_org, tst_inp = rd.get_validation_data(num_from=20, num_img=1, acc=4, full=True) 
+mu = np.mean(tst_org, axis=(-1, -2), keepdims=True)
+mean = mu[0][0][0]
+std = np.std(tst_org, axis=(-1, -2), keepdims=True)
 
-tst_org, tst_inp = rd.get_validation_data(num_from=20, num_img=1, acc=4, full=False) 
-mu = np.mean(tst_inp, axis=(-1, -2), keepdims=True)
-st = np.std(tst_inp, axis=(-1, -2), keepdims=True)
-tst_inp = (tst_inp - mu) / st
+# Add noise to FC to see how it reacts
+coeff_inp = sf.fft2c(tst_inp)
+first_img = sf.sos(sf.crop(sf.ifft2c(coeff_inp), (320, 320)))
+first_img = first_img[np.newaxis, ...]
 
-# Initialize graph
-tf.compat.v1.reset_default_graph()
-with tf.compat.v1.Session(config=config) as sess:
-    new_saver = tf.compat.v1.train.import_meta_graph(model_dir + '/modelTst.meta')
-    new_saver.restore(sess, load_chk_pt)
-    graph = tf.compat.v1.get_default_graph()
-    predT = graph.get_tensor_by_name('predTst:0')
-    senseT = graph.get_tensor_by_name('sense:0')
+shp = list(coeff_inp.shape)
 
-    tst_coeff = sf.fft2c(tst_org)
-    full_fc = tf.convert_to_tensor(tst_coeff, dtype=tf.complex64)
-    inp_fc = tf.convert_to_tensor(tst_inp, dtype=tf.complex64)
-    loss_fc = tf.norm(full_fc - inp_fc, ord='euclidean')
-    grad_ys = tf.ones(loss_fc.shape, dtype=tf.complex64)
-    g = tf.gradients(loss_fc, inp_fc, grad_ys=grad_ys)
-    g.eval(session=sess)
-    #grad = sess.run(g, feed_dict={inp_fc:tst_inp, full_fc:tst_coeff})
+# Use a set fraction of FC to perturb (1/fraction is the amount that will be perturbed)
+fraction = 20
 
-    inp_fc += np.copy(grad) / 320
+# Scale should be 320, so dividing by it in the Fourier space will yield correct size in image space
+scale = np.sqrt(np.prod(shp[-2:]))
+gauss_noise_fc_real = np.random.normal(mean, std, size=shp)
+gauss_noise_fc_imag = np.random.normal(mean, std, size=shp) * 1j
+gauss_noise_fc = gauss_noise_fc_real[...] + gauss_noise_fc_imag[...]
 
-    adv = sf.ifft2c(inp_fc)
+fc_scaling = np.sum(np.abs(coeff_inp)) / fraction
+gauss_noise_fc *= fc_scaling
+print(fraction, scale, np.sum(np.abs(gauss_noise_fc)), np.sum(np.abs(coeff_inp)))
+print('FC Scaling', fc_scaling)
 
-    rows, cols = 1, 2
+coeff_final = np.copy(coeff_inp) + np.copy(gauss_noise_fc)
+idx_max = np.unravel_index(coeff_final.argmax(), coeff_final.shape)
 
-    # Display original results
-    fc_images = [tst_org, adv]
-    fc_titles = ['FC Full', 'Adv']
-    for i in range(1, 2):
-        plt.subplot(rows, cols, i)
-        plt.imshow(fc_images[i - 1][0], cmap='gray')
-        plt.title(fc_titles[i - 1])
-        plt.axis('off')
+# Add perturbations to the FC via the Gaussian method
+tst_fc = sf.sos(sf.crop(sf.ifft2c(coeff_final), (320, 320)))
+tst_fc = tst_fc[np.newaxis, ...]
+fc_error = np.sqrt(np.sum((tst_fc[:, :, :] - np.copy(tst_org)[:, :, :]) ** 2))
+print('Gaussian SSE', fc_error)
+print('Sum Gaussian', np.sum(np.abs(tst_fc)))
 
-    plt.savefig('fc_attack', bbox_inches='tight')
-
-    fc_error = np.sqrt(np.sum((adv[:, :, :] - np.copy(tst_org)[:, :, :]) ** 2))
-    print(fc_error)
+# Add perturbations to max value of FC (which is the DC component)
+coeff_final = np.copy(coeff_inp)
+idx_max = np.unravel_index(coeff_final.argmax(), coeff_final.shape)
+coeff_final[idx_max[0]][idx_max[1]][idx_max[2]] += np.sum(np.abs(gauss_noise_fc))
+tst_fc = sf.sos(sf.crop(sf.ifft2c(coeff_final), (320, 320)))
+tst_fc = tst_fc[np.newaxis, ...]
+fc_error = np.sqrt(np.sum((tst_fc[:, :, :] - np.copy(tst_org)[:, :, :]) ** 2))
+print('DC SSE', fc_error)
+print('Sum DC', np.sum(np.abs(tst_fc)))

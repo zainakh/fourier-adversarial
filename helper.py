@@ -4,11 +4,10 @@ import matplotlib.pyplot as plt
 import misc as sf
 from os import path
 
-def save_results(datafile, img_shape, original_error, gaussian_error, adv_error, avg_perturb):
+def save_results(datafile, img_shape, original_error, gaussian_error, adv_error, fraction):
     from numpy import save, load
 
-    perturb = avg_perturb * (img_shape[0] * img_shape[1] * img_shape[2])
-    errors = [perturb, original_error, gaussian_error, adv_error]
+    errors = [fraction, original_error, gaussian_error, adv_error]
     if path.exists(datafile):
         sse_vs_perturb = load(datafile)
         sse_vs_perturb = np.append(sse_vs_perturb, errors)
@@ -16,6 +15,29 @@ def save_results(datafile, img_shape, original_error, gaussian_error, adv_error,
     else:
         save(datafile, errors)
     print(errors)
+
+
+def image_grid_small(filename, orig, perturb, final):
+    rows, cols = 2, 3
+    original_images = [orig, perturb, final]
+    original_titles = ['FC', 'Perurbation Added', 'Combined FC']
+    for i in range(1, 4):
+        plt.subplot(rows, cols, i)
+        plt.imshow(original_images[i - 1][0], cmap='gray')
+        plt.title(original_titles[i - 1])
+        plt.axis('off')
+
+    # Display log of original results
+    log_images = [np.log(orig), np.log(perturb), np.log(final)]
+    log_titles = ['Log FC', 'Log Perturbation Added', 'Log Combined FC']
+    for i in range(1, 4):
+        plt.subplot(rows, cols, i + 3)
+        plt.imshow(log_images[i - 1][0], cmap='gray')
+        plt.title(log_titles[i - 1])
+        plt.axis('off')
+    
+    plt.savefig(filename, bbox_inches='tight')
+
 
 
 def image_grid(filename, tst_org, tst_inp, fc_rec, gauss_noise, tst_inp_gauss, tst_rec_gauss, tst_intr_adv, tst_inp_adv, tst_rec_adv):
