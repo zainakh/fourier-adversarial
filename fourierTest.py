@@ -52,7 +52,7 @@ gauss_noise_fc *= fc_scaling
 coeff_final = np.copy(coeff_inp) + np.copy(gauss_noise_fc)
 tst_fc = sf.sos(sf.crop(sf.ifft2c(coeff_final), (320, 320)))
 tst_fc = tst_fc[np.newaxis, ...]
-fc_error = np.sqrt(np.sum((tst_fc[:, :, :] - np.copy(tst_org)[:, :, :]) ** 2))
+fc_error = np.sqrt(np.sum((np.copy(tst_fc)[:, :, :] - np.copy(tst_org)[:, :, :]) ** 2))
 print('Gaussian SSE', fc_error)
 print('Sum Gaussian', np.sum(np.abs(tst_fc)))
 
@@ -62,6 +62,6 @@ idx_max = np.unravel_index(coeff_final.argmax(), coeff_final.shape)
 coeff_final[idx_max[0]][idx_max[1]][idx_max[2]] += np.sum(np.abs(gauss_noise_fc))
 tst_fc = sf.sos(sf.crop(sf.ifft2c(coeff_final), (320, 320)))
 tst_fc = tst_fc[np.newaxis, ...]
-fc_error = np.sqrt(np.sum((tst_fc[:, :, :] - np.copy(tst_org)[:, :, :]) ** 2))
+fc_error = np.sqrt(np.sum((np.copy(tst_fc)[:, :, :] - np.copy(tst_org)[:, :, :]) ** 2))
 print('DC SSE', fc_error)
 print('Sum DC', np.sum(np.abs(tst_fc)))
