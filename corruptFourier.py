@@ -42,11 +42,10 @@ def main(argv):
     model_dir = cwd + '/' + directory
     load_chk_pt = tf.train.latest_checkpoint(model_dir)
 
-    #epsilons = np.asarray([0, 2.5, 5, 7.5, 10, 12.5, 15, 17.5, 20])
-    epsilons = np.asarray([0, 2.5, 5])
+    epsilons = np.asarray([0, 2.5, 5, 7.5, 10, 12.5, 15, 17.5, 20])
+    #epsilons = np.asarray([0, 2.5])
     perturb_sizes = list(np.linspace(0, 30000, num=9))
     epsilons_perturb = zip(epsilons, perturb_sizes)
-    print(perturb_sizes)
 
     for epsilon, perturb in epsilons_perturb:
         tst_org, tst_inp = rd.get_validation_data(num_from=20, num_img=1, acc=4, full=full) 
@@ -135,6 +134,7 @@ def main(argv):
         gauss_noise_fc_real = np.random.normal(mean, std, size=shp)
         gauss_noise_fc_imag = np.random.normal(mean, std, size=shp) * 1j
         gauss_noise_fc = gauss_noise_fc_real[...] + gauss_noise_fc_imag[...]
+        gauss_noise_fc *=  1 / np.sum(np.abs(gauss_noise_fc))
         if epsilon != 0:  
             #fc_scaling = (perturb) / (np.sum(np.abs(gauss_noise_fc)) * scale)
             fc_scaling = np.sum(np.abs(coeff_inp)) / fraction
@@ -144,10 +144,10 @@ def main(argv):
         else:
             gauss_noise_fc = np.zeros(shape=gauss_noise_fc.shape, dtype=np.complex64)
 
-        #coeff_final = np.copy(coeff_inp) + np.copy(gauss_noise_fc)
-        coeff_final = np.copy(coeff_inp)
-        idx_max = np.unravel_index(coeff_final.argmax(), coeff_final.shape)
-        coeff_final[idx_max[0]][idx_max[1]][idx_max[2]] += np.sum(np.abs(gauss_noise_fc))
+        coeff_final = np.copy(coeff_inp) + np.copy(gauss_noise_fc)
+        #coeff_final = np.copy(coeff_inp)
+        #idx_max = np.unravel_index(coeff_final.argmax(), coeff_final.shape)
+        #coeff_final[idx_max[0]][idx_max[1]][idx_max[2]] += np.sum(np.abs(gauss_noise_fc))
 
         print('Amax', np.amax(coeff_final))
         tst_fc = sf.sos(sf.crop(sf.ifft2c(coeff_final), (320, 320)))
