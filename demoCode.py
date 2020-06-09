@@ -43,6 +43,7 @@ with tf.Session(config=config) as sess:
     new_saver.restore(sess, loadChkPoint)
     graph = tf.get_default_graph()
     predT = graph.get_tensor_by_name('predTst:0')
+    maskT = graph.get_tensor_by_name('mask:0')
     senseT = graph.get_tensor_by_name('sense:0')
     for i in range(nImg):
         dataDict = {senseT: tstInp[[i]]}

@@ -3,8 +3,8 @@ import numpy as np
 
 plt.style.use('seaborn')
 
-all_data_partial = np.load('Jun2_partial.npy')
-all_data_full = np.load('Jun2_full.npy')
+all_data_partial = np.load('Jun8_p.npy')
+all_data_full = np.load('Jun8_f.npy')
 
 n = 4
 data_partial = [all_data_partial[k:k+n] for k in range(0, len(all_data_partial), n)]

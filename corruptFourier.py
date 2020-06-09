@@ -46,9 +46,13 @@ def main(argv):
     #epsilons = np.asarray([0, 2.5])
     perturb_sizes = list(np.linspace(0, 30000, num=9))
     epsilons_perturb = zip(epsilons, perturb_sizes)
+    size_array = []
+    size_tarray = []
+
 
     for epsilon, perturb in epsilons_perturb:
         tst_org, tst_inp = rd.get_validation_data(num_from=20, num_img=1, acc=4, full=full) 
+        tst_org_full, tst_inp_full = rd.get_validation_data(num_from=20, num_img=1, acc=4, full=True) 
 
         mu = np.mean(tst_org, axis=(-1, -2), keepdims=True)
         st = np.std(tst_org, axis=(-1, -2), keepdims=True)
@@ -57,9 +61,15 @@ def main(argv):
         tst_org_adv = np.copy(tst_org)
         tst_inp_orig = np.copy(tst_inp)
 
+        mu_full = np.mean(tst_org_full, axis=(-1, -2), keepdims=True)
+        st_full = np.std(tst_org_full, axis=(-1, -2), keepdims=True)
+        tst_inp_full = (tst_inp_full - mu_full) / st_full
+        tst_inp_full = np.clip(tst_inp_full, -6, 6)
+
         # Load model and predict
         tst_org_adv = tst_org_adv[..., np.newaxis]
         tst_inp = tst_inp[..., np.newaxis]
+        tst_inp_full = tst_inp_full[..., np.newaxis]
         tst_rec = np.zeros(tst_inp.shape, dtype=np.float32)
         tst_inp_adv = np.copy(tst_inp)
         tst_intr_adv = np.zeros(tst_inp_adv.shape, dtype=np.float32)
@@ -86,8 +96,11 @@ def main(argv):
             # Create adversarial example and run reconstruction
             tst_intr_adv = epsilon * np.copy(grad)[0]
             if epsilon != 0:
+                print('tst_inp, tst_inp_full', np.sum(np.abs(tst_inp_adv)), np.sum(np.abs(tst_inp_full)))    
                 tst_intr_adv *=  perturb / (np.sum(np.abs(tst_intr_adv)))            
-                fraction = np.sum(np.abs(tst_inp_adv)) / np.sum(np.abs(tst_intr_adv))
+                fraction = np.sum(np.abs(tst_inp_full)) / np.sum(np.abs(tst_intr_adv))
+                #fraction = np.linalg.norm(tst_inp_adv) / np.linalg.norm(tst_intr_adv)
+                #fraction = np.linalg.norm(tst_inp_full) / np.linalg.norm(tst_intr_adv)
             else:
                 fraction = 0
 
@@ -99,10 +112,9 @@ def main(argv):
             # Corrupt the input Fourier coefficients with Gaussian noise
             mean, std = mu[0][0][0], st
             gauss_noise = np.random.normal(mean, std, tst_inp_orig.shape)
-            gauss_noise = gauss_noise * (np.sum(np.absolute(tst_intr_adv)) / np.sum(np.absolute(gauss_noise)))
+            gauss_noise *= (np.linalg.norm(tst_intr_adv)) / np.linalg.norm(gauss_noise)
             img_shape = np.shape(tst_inp_orig)
-            #avg_perturb = np.sum(np.absolute(gauss_noise)) / (img_shape[0] * img_shape[1] * img_shape[2])
-            tst_inp_gauss = np.copy(tst_inp_orig) - np.copy(gauss_noise)
+            tst_inp_gauss = np.copy(tst_inp_orig) + np.copy(gauss_noise)
             tst_inp_gauss = tst_inp_gauss[..., np.newaxis]
             tst_rec_gauss = np.zeros(tst_inp_gauss.shape, dtype=np.float32)
             
@@ -111,6 +123,7 @@ def main(argv):
 
         # Transform images into original shape
         tst_inp = tst_inp[..., 0]
+        tst_inp_full = tst_inp_full[..., 0]
         tst_rec = tst_rec[..., 0]
         tst_inp_gauss = tst_inp_gauss[..., 0]
         tst_rec_gauss = tst_rec_gauss[..., 0]
@@ -120,10 +133,11 @@ def main(argv):
         tst_inp, tst_rec = tst_inp * st + mu, tst_rec * st + mu
         tst_inp_gauss, tst_rec_gauss = tst_inp_gauss * st + mu, tst_rec_gauss * st + mu
         tst_inp_adv, tst_rec_adv = tst_inp_adv * st + mu, tst_rec_adv * st + mu
-
+        tst_inp_full = tst_inp_full * st_full + mu_full
 
         # Add noise to FC to see how it reacts
         coeff_inp = sf.fft2c(tst_inp)
+        coeff_inp_full = sf.fft2c(tst_inp_full)
         first_img = sf.sos(sf.crop(sf.ifft2c(coeff_inp), (320, 320)))
         first_img = first_img[np.newaxis, ...]
 
@@ -134,22 +148,23 @@ def main(argv):
         gauss_noise_fc_real = np.random.normal(mean, std, size=shp)
         gauss_noise_fc_imag = np.random.normal(mean, std, size=shp) * 1j
         gauss_noise_fc = gauss_noise_fc_real[...] + gauss_noise_fc_imag[...]
-        gauss_noise_fc *=  1 / np.sum(np.abs(gauss_noise_fc))
+
+        gauss_noise_fc[np.nonzero(coeff_inp == 0.+0.j)] = 0.+0.j
+
+        gauss_noise_fc *=  1 / np.linalg.norm(gauss_noise_fc)
         if epsilon != 0:  
-            #fc_scaling = (perturb) / (np.sum(np.abs(gauss_noise_fc)) * scale)
-            fc_scaling = np.sum(np.abs(coeff_inp)) / fraction
+            fc_scaling = np.linalg.norm(coeff_inp_full) / fraction
             gauss_noise_fc *= fc_scaling
             print(perturb, scale, perturb/scale, np.sum(np.abs(gauss_noise_fc)), np.sum(np.abs(coeff_inp)))
             print('FC Scaling', fc_scaling)
         else:
             gauss_noise_fc = np.zeros(shape=gauss_noise_fc.shape, dtype=np.complex64)
 
-        coeff_final = np.copy(coeff_inp) + np.copy(gauss_noise_fc)
-        #coeff_final = np.copy(coeff_inp)
-        #idx_max = np.unravel_index(coeff_final.argmax(), coeff_final.shape)
-        #coeff_final[idx_max[0]][idx_max[1]][idx_max[2]] += np.sum(np.abs(gauss_noise_fc))
 
-        print('Amax', np.amax(coeff_final))
+        noise_size = np.linalg.norm(gauss_noise_fc)
+        size_array.append(noise_size)
+
+        coeff_final = np.copy(coeff_inp) + np.copy(gauss_noise_fc)
         tst_fc = sf.sos(sf.crop(sf.ifft2c(coeff_final), (320, 320)))
 
         tst_fc_noise = sf.sos(sf.crop(sf.ifft2c(gauss_noise_fc), (320, 320)))
@@ -160,6 +175,9 @@ def main(argv):
         tst_fc = tst_fc[np.newaxis, ...]
         print('PIC SUMS', epsilon, np.sum(np.abs(tst_fc[...])), np.sum(np.abs(tst_rec_gauss)), np.sum(np.abs(tst_rec_adv[...])))
         print('NOISE SUMS', np.sum(np.abs(tst_fc_noise)), np.sum(np.abs(gauss_noise)), np.sum(np.abs(tst_intr_adv)))
+
+        noise_transform_size = np.linalg.norm(tst_fc_noise)
+        size_tarray.append(noise_transform_size)
 
         [fc_error, gaussian_error, adv_error] = calculate_sse(tst_org, tst_fc, tst_rec_gauss, tst_rec_adv)
 
@@ -174,6 +192,8 @@ def main(argv):
         if img_name:
             image_grid(img_name, tst_org, tst_inp, tst_fc, gauss_noise, tst_inp_gauss, tst_rec_gauss, tst_intr_adv, tst_inp_adv, tst_rec_adv)
 
+    np.save('p', np.array(size_array))
+    np.save('noise_transform', np.array(size_tarray))
 
 if __name__ == "__main__":
     sys.exit(main(parse_args()))
