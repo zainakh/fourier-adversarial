@@ -3,8 +3,8 @@ import numpy as np
 
 plt.style.use('seaborn')
 
-all_data_partial = np.load('Jun8_p.npy')
-all_data_full = np.load('Jun8_f.npy')
+all_data_partial = np.load('Jun17_p_ssim.npy')
+all_data_full = np.load('Jun17_f_ssim.npy')
 
 n = 4
 data_partial = [all_data_partial[k:k+n] for k in range(0, len(all_data_partial), n)]
@@ -31,8 +31,8 @@ plt.plot(x_p, p_orig, marker='o', ls='--', color='crimson', label='FC Partial Re
 plt.plot(x_f, f_gauss, marker='o', color='seagreen', label='Gaussian Noise Full Reconstruction')
 plt.plot(x_f, f_adv, marker='o', color='darkblue', label='Adversarial Full Reconstruction')
 plt.plot(x_f, f_orig, marker='o', color='crimson', label='FC Full Reconstruction')
-plt.ylabel('SSE in Reconstruction')
-plt.xlabel('Amount of Perturbations Added as Fraction of the Original Signal')
-plt.title('Fourier Coefficient Reconstruction Error vs Perturbations Added')
-plt.legend(loc='upper left')
-plt.savefig('triple_sse.png')
+plt.ylabel('SSIM Score')
+plt.xlabel('Amount of Perturbations Added as Fraction of the Full Signal')
+plt.title('Reconstruction SSIM vs Perturbations Added')
+plt.legend(loc='upper right')
+plt.savefig('triple_sse_ssim.png')

@@ -39,6 +39,31 @@ def image_grid_small(filename, orig, perturb, final):
     plt.savefig(filename, bbox_inches='tight')
 
 
+def save_images(filename_prefix, tst_org, tst_inp, fc_rec, gauss_noise, tst_inp_gauss, tst_rec_gauss, tst_intr_adv, tst_inp_adv, tst_rec_adv):
+    # Display FC results
+    original_images = [tst_org, tst_inp, fc_rec]
+    original_titles = ['Original', 'FC_Perturbed', 'FC_Reconstruct']
+    for i in range(1, 4):
+        plt.imshow(original_images[i - 1][0], cmap='gray')
+        plt.axis('off')
+        plt.savefig(original_titles[i - 1])
+
+    # Display Gaussian results
+    gaussian_images = [gauss_noise, tst_inp_gauss, tst_rec_gauss]
+    gaussian_titles = ['Gauss_Perturbation', 'Gaussian_Input_Image', 'Gaussian_Reconstruct']
+    for i in range(1, 4):
+        plt.imshow(gaussian_images[i - 1][0], cmap='gray')
+        plt.axis('off')
+        plt.savefig(gaussian_titles[i - 1])
+
+    # Display adversarial results
+    adv_images = [tst_intr_adv, tst_inp_adv, tst_rec_adv]
+    adv_titles = ['Adv_Perturbation', 'Adv_Input_Image', 'Adv_Reconstruct']
+    for i in range(1, 4):
+        plt.imshow(adv_images[i - 1][0], cmap='gray')
+        plt.axis('off')
+        plt.savefig(adv_titles[i - 1])
+
 
 def image_grid(filename, tst_org, tst_inp, fc_rec, gauss_noise, tst_inp_gauss, tst_rec_gauss, tst_intr_adv, tst_inp_adv, tst_rec_adv):
     # Subplot parameters
@@ -113,3 +138,16 @@ def calculate_sse(tst_org, tst_fc, tst_rec_gauss, tst_rec_adv):
     gaussian_error = np.sqrt(np.sum((tst_rec_gauss[:, :, :] - np.copy(tst_org)[:, :, :]) ** 2))
     adv_error = np.sqrt(np.sum((tst_rec_adv[:, :, :] - np.copy(tst_org)[:, :, :]) ** 2))
     return [fc_error, gaussian_error, adv_error]
+
+def calculate_psnr(tst_org, tst_fc, tst_rec_gauss, tst_rec_adv):
+    psnr_fc = sf.psnr2(tst_org, tst_fc)
+    psnr_gauss = sf.psnr2(tst_org, tst_rec_gauss)
+    psnr_adv = sf.psnr2(tst_org, tst_rec_adv)
+    return [psnr_fc, psnr_gauss, psnr_adv]
+
+
+def calculate_ssim(tst_org, tst_fc, tst_rec_gauss, tst_rec_adv):
+    ssim_fc = sf.ssim2(tst_org, tst_fc)
+    ssim_gauss = sf.ssim2(tst_org, tst_rec_gauss)
+    ssim_adv = sf.ssim2(tst_org, tst_rec_adv)
+    return [ssim_fc, ssim_gauss, ssim_adv]

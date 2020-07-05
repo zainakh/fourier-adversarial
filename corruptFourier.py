@@ -12,7 +12,7 @@ import tensorflow as tf
 import readData as rd
 import misc as sf
 import sys
-from helper import save_results, image_grid, image_grid_small, calculate_sse
+from helper import save_results, image_grid, image_grid_small, calculate_sse, calculate_psnr, calculate_ssim, save_images
 
 
 
@@ -181,19 +181,22 @@ def main(argv):
 
         [fc_error, gaussian_error, adv_error] = calculate_sse(tst_org, tst_fc, tst_rec_gauss, tst_rec_adv)
 
+        #[ssim_fc, ssim_gauss, ssim_adv] = calculate_ssim(tst_org, tst_fc, tst_rec_gauss, tst_rec_adv)
+
+
         if fraction != 0:
-            image_grid_small('fc_visual', np.abs(coeff_inp), np.abs(gauss_noise_fc), np.abs(coeff_final))
+            #image_grid_small('fc_visual', np.abs(coeff_inp), np.abs(gauss_noise_fc), np.abs(coeff_final))
             fraction_original_to_perturb = 1 / fraction
         else:
             fraction_original_to_perturb = 0
 
         save_results(filename + '.npy', img_shape, fc_error, gaussian_error, adv_error, fraction_original_to_perturb)
+        
+        #save_results(filename + '_ssim.npy', img_shape, ssim_fc, ssim_gauss, ssim_adv, fraction_original_to_perturb)
 
         if img_name:
-            image_grid(img_name, tst_org, tst_inp, tst_fc, gauss_noise, tst_inp_gauss, tst_rec_gauss, tst_intr_adv, tst_inp_adv, tst_rec_adv)
-
-    np.save('p', np.array(size_array))
-    np.save('noise_transform', np.array(size_tarray))
+            save_images(img_name, tst_org, tst_inp, tst_fc, gauss_noise, tst_inp_gauss, tst_rec_gauss, tst_intr_adv, tst_inp_adv, tst_rec_adv)
+            #image_grid(img_name, tst_org, tst_inp, tst_fc, gauss_noise, tst_inp_gauss, tst_rec_gauss, tst_intr_adv, tst_inp_adv, tst_rec_adv)
 
 if __name__ == "__main__":
     sys.exit(main(parse_args()))
