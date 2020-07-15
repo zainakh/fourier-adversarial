@@ -7,4 +7,4 @@ To run the main script, run using the following command line when in the base di
 python corruptFourier.py -f *name of file to save data to* -i *name of new file you want to save image to* -fc
 ```
 
-The `-fc` flag at the end means you run with a full set of Fourier coefficients. You can replace this with `-p` to run with a partial set of coefficients. The data that is saved can be plotted via the `plotResults.py` file. 
+The `-fc` flag at the end means you run with a full set of Fourier coefficients. You can replace this with `-p` to run with a partial set of coefficients. The data that is saved can be plotted via the `plotResults.py` file, although existing plots can be seen in the plots folder. The error metrics seen include the sum of squared errors (SSE), structural similarity index (SSIM), and peak signal-to-noise ratio (PSNR). 
