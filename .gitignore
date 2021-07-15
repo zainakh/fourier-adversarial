@@ -4,3 +4,5 @@ data/*
 baselineModel/*
 __pycache__/*
 fourier/*
+.idea/*
+.ipynb_checkpoints/*
